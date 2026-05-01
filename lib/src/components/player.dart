@@ -1,11 +1,10 @@
-import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
-import 'package:flutter/material.dart' show Colors;
 import '../../core/game_config.dart';
 import '../game/void_of_echoes_game.dart';
 
-class Player extends PositionComponent with HasGameRef<VoidOfEchoesGame>, CollisionCallbacks {
+class Player extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
   static const double speed = 400.0;
   static const double radius = 30.0;
   
@@ -28,8 +27,8 @@ class Player extends PositionComponent with HasGameRef<VoidOfEchoesGame>, Collis
 
   @override
   void update(double dt) {
-    if (gameRef.moveDir != Vector2.zero()) {
-      position += gameRef.moveDir * speed * dt;
+    if (game.moveDir != Vector2.zero()) {
+      position += game.moveDir * speed * dt;
     }
 
     position.x = position.x.clamp(radius, GameConfig.arenaWidth - radius);
@@ -40,6 +39,6 @@ class Player extends PositionComponent with HasGameRef<VoidOfEchoesGame>, Collis
   void render(Canvas canvas) {
     canvas.drawCircle(Offset(radius, radius), radius, Paint()..color = GameConfig.vibrantBlue);
     canvas.drawCircle(Offset(radius, radius), radius, _paint);
-    canvas.drawCircle(Offset(radius, radius), radius * 0.5, Paint()..color = Colors.white.withOpacity(0.5));
+    canvas.drawCircle(Offset(radius, radius), radius * 0.5, Paint()..color = Colors.white.withValues(alpha: 0.5));
   }
 }

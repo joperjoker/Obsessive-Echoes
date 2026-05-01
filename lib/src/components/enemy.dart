@@ -6,7 +6,7 @@ import '../game/void_of_echoes_game.dart';
 import '../game/audio_manager.dart';
 import 'player.dart';
 
-class Enemy extends PositionComponent with HasGameRef<VoidOfEchoesGame>, CollisionCallbacks {
+class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
   final double speed = 150.0;
   static const double sizeVal = 50.0;
   
@@ -23,9 +23,9 @@ class Enemy extends PositionComponent with HasGameRef<VoidOfEchoesGame>, Collisi
 
   @override
   void update(double dt) {
-    if (gameRef.notifier.state.isGameOver) return;
+    if (game.gameState.isGameOver) return;
     
-    final dir = (gameRef.player.position - position).normalized();
+    final dir = (game.player.position - position).normalized();
     position += dir * speed * dt;
   }
 
@@ -35,7 +35,7 @@ class Enemy extends PositionComponent with HasGameRef<VoidOfEchoesGame>, Collisi
     if (other is Player) {
       removeFromParent();
       Future.microtask(() {
-        gameRef.notifier.updateIdentity(-15.0);
+        game.notifier.updateIdentity(-15.0);
         AudioManager.playHit();
       });
     }
@@ -47,7 +47,6 @@ class Enemy extends PositionComponent with HasGameRef<VoidOfEchoesGame>, Collisi
       Rect.fromLTWH(0, 0, sizeVal, sizeVal),
       Paint()..color = GameConfig.crimson,
     );
-    // Draw a dark center to give it more character
     canvas.drawRect(
       Rect.fromLTWH(sizeVal * 0.25, sizeVal * 0.25, sizeVal * 0.5, sizeVal * 0.5),
       Paint()..color = GameConfig.background,

@@ -15,6 +15,8 @@ class GameState {
     this.stage = 1,
   });
 
+  factory GameState.initial() => GameState();
+
   GameState copyWith({
     int? score,
     double? identity,
@@ -33,7 +35,9 @@ class GameState {
 }
 
 class GameStateNotifier extends StateNotifier<GameState> {
-  GameStateNotifier() : super(GameState());
+  GameStateNotifier() : super(GameState.initial());
+
+  GameState get currentState => state;
 
   void addScore(int points) {
     state = state.copyWith(score: state.score + points);

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
-import 'package:flame/input.dart';
+import 'package:flame/events.dart';
 import 'package:flutter/material.dart' show Colors;
 import '../../core/game_config.dart';
 import 'game_state.dart';
@@ -10,7 +10,7 @@ import '../components/player.dart';
 import '../components/spawn_manager.dart';
 import '../components/background_grid.dart';
 
-class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection {
+class VoidOfEchoesGame extends FlameGame with DragCallbacks, HasCollisionDetection {
   final GameStateNotifier notifier;
   
   late Player player;
@@ -28,6 +28,8 @@ class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection
     ),
   );
 
+  GameState get gameState => notifier.currentState;
+
   @override
   Future<void> onLoad() async {
     camera.viewfinder.anchor = Anchor.topLeft;
@@ -43,16 +45,18 @@ class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection
   }
 
   @override
-  void onPanStart(DragStartInfo info) {
-    _joystickAnchor = info.eventPosition.global.clone();
-    _joystickCurrent = info.eventPosition.global.clone();
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    _joystickAnchor = event.localPosition.clone();
+    _joystickCurrent = event.localPosition.clone();
   }
 
   @override
-  void onPanUpdate(DragUpdateInfo info) {
-    if (_joystickAnchor == null) return;
+  void onDragUpdate(DragUpdateEvent event) {
+    super.onDragUpdate(event);
+    if (_joystickAnchor == null || _joystickCurrent == null) return;
     
-    _joystickCurrent = info.eventPosition.global.clone();
+    _joystickCurrent!.add(event.localDelta);
     final delta = _joystickCurrent! - _joystickAnchor!;
     
     if (delta.length > _joystickRadius) {
@@ -67,14 +71,16 @@ class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection
   }
 
   @override
-  void onPanEnd(DragEndInfo info) {
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
     _joystickAnchor = null;
     _joystickCurrent = null;
     moveDir = Vector2.zero();
   }
 
   @override
-  void onPanCancel() {
+  void onDragCancel(DragCancelEvent event) {
+    super.onDragCancel(event);
     _joystickAnchor = null;
     _joystickCurrent = null;
     moveDir = Vector2.zero();
@@ -85,10 +91,10 @@ class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection
     super.render(canvas);
     
     if (_joystickAnchor != null && _joystickCurrent != null) {
-      final paint = Paint()..color = Colors.white.withOpacity(0.3);
+      final paint = Paint()..color = Colors.white.withValues(alpha: 0.3);
       canvas.drawCircle(_joystickAnchor!.toOffset(), _joystickRadius, paint);
       
-      final innerPaint = Paint()..color = Colors.white.withOpacity(0.5);
+      final innerPaint = Paint()..color = Colors.white.withValues(alpha: 0.5);
       final innerPos = _joystickAnchor! + (moveDir * (_joystickCurrent! - _joystickAnchor!).length.clamp(0.0, _joystickRadius));
       canvas.drawCircle(innerPos.toOffset(), 40.0, innerPaint);
     }
@@ -102,6 +108,7 @@ class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection
     // Clear the world children and re-add essentials
     world.children.where((c) => c is! CameraComponent).forEach((c) => c.removeFromParent());
     
+    world.add(BackgroundGrid());
     player = Player();
     world.add(player);
     world.add(SpawnManager());

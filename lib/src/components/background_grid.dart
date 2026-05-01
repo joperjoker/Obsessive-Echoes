@@ -6,7 +6,7 @@ class BackgroundGrid extends Component {
   @override
   void render(Canvas canvas) {
     final paint = Paint()
-      ..color = GameConfig.vibrantBlue.withOpacity(0.05)
+      ..color = GameConfig.vibrantBlue.withValues(alpha: 0.05)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
