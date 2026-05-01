@@ -7,11 +7,10 @@ import '../../core/game_config.dart';
 import 'game_state.dart';
 import 'audio_manager.dart';
 import '../components/player.dart';
-import '../components/enemy.dart';
-import '../components/fragment.dart';
-import 'dart:math' as math;
+import '../components/spawn_manager.dart';
+import '../components/background_grid.dart';
 
-class VoidOfEchoesGame extends FlameGame with PanDetector {
+class VoidOfEchoesGame extends FlameGame with PanDetector, HasCollisionDetection {
   final GameStateNotifier notifier;
   
   late Player player;
@@ -21,10 +20,6 @@ class VoidOfEchoesGame extends FlameGame with PanDetector {
   Vector2? _joystickCurrent;
   final double _joystickRadius = 90.0;
   final double _deadzone = 8.0;
-  
-  double _spawnTimer = 0;
-  double _fragmentTimer = 0;
-  final math.Random _random = math.Random();
 
   VoidOfEchoesGame({required this.notifier}) : super(
     camera: CameraComponent.withFixedResolution(
@@ -41,8 +36,10 @@ class VoidOfEchoesGame extends FlameGame with PanDetector {
     await AudioManager.init();
     AudioManager.playBGM();
 
+    world.add(BackgroundGrid());
     player = Player();
     world.add(player);
+    world.add(SpawnManager());
   }
 
   @override
@@ -87,7 +84,6 @@ class VoidOfEchoesGame extends FlameGame with PanDetector {
   void render(Canvas canvas) {
     super.render(canvas);
     
-    // Draw Virtual Joystick
     if (_joystickAnchor != null && _joystickCurrent != null) {
       final paint = Paint()..color = Colors.white.withOpacity(0.3);
       canvas.drawCircle(_joystickAnchor!.toOffset(), _joystickRadius, paint);
@@ -98,57 +94,17 @@ class VoidOfEchoesGame extends FlameGame with PanDetector {
     }
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
-    if (notifier.state.isGameOver || notifier.state.isVictory) return;
-
-    _spawnTimer += dt;
-    _fragmentTimer += dt;
-
-    if (_spawnTimer > 2.0) {
-      _spawnTimer = 0;
-      _spawnEnemy();
-    }
-
-    if (_fragmentTimer > 1.5) {
-      _fragmentTimer = 0;
-      _spawnFragment();
-    }
-  }
-
-  void _spawnEnemy() {
-    final side = _random.nextInt(4);
-    Vector2 pos;
-    switch (side) {
-      case 0: pos = Vector2(_random.nextDouble() * GameConfig.arenaWidth, -50); break;
-      case 1: pos = Vector2(GameConfig.arenaWidth + 50, _random.nextDouble() * GameConfig.arenaHeight); break;
-      case 2: pos = Vector2(_random.nextDouble() * GameConfig.arenaWidth, GameConfig.arenaHeight + 50); break;
-      default: pos = Vector2(-50, _random.nextDouble() * GameConfig.arenaHeight); break;
-    }
-    world.add(Enemy(position: pos));
-  }
-
-  void _spawnFragment() {
-    final pos = Vector2(
-      50 + _random.nextDouble() * (GameConfig.arenaWidth - 100),
-      50 + _random.nextDouble() * (GameConfig.arenaHeight - 100),
-    );
-    world.add(Fragment(position: pos));
-  }
-
   void resetGame() {
     _joystickAnchor = null;
     _joystickCurrent = null;
     moveDir = Vector2.zero();
-    _spawnTimer = 0;
-    _fragmentTimer = 0;
     
-    // Remove transient world children
-    world.children.whereType<Enemy>().forEach((e) => e.removeFromParent());
-    world.children.whereType<Fragment>().forEach((f) => f.removeFromParent());
+    // Clear the world children and re-add essentials
+    world.children.where((c) => c is! CameraComponent).forEach((c) => c.removeFromParent());
     
-    player.position = Vector2(GameConfig.arenaWidth / 2, GameConfig.arenaHeight / 2);
+    player = Player();
+    world.add(player);
+    world.add(SpawnManager());
     
     notifier.reset();
     AudioManager.playBGM();
