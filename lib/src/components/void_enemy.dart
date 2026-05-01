@@ -1,4 +1,6 @@
+import 'dart:math' as math;
 import 'dart:ui';
+import 'package:flutter/material.dart' show Colors;
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import '../../core/game_config.dart';
@@ -7,11 +9,11 @@ import '../game/audio_manager.dart';
 import '../game/effect_manager.dart';
 import 'player.dart';
 
-class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
-  final double speed = 150.0;
-  static const double sizeVal = 50.0;
+class VoidEnemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
+  final double speed = 90.0;
+  static const double sizeVal = 80.0;
   
-  Enemy({required Vector2 position}) : super(
+  VoidEnemy({required Vector2 position}) : super(
     position: position,
     size: Vector2.all(sizeVal),
     anchor: Anchor.center,
@@ -28,6 +30,10 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
     
     final dir = (game.player.position - position).normalized();
     position += dir * speed * dt;
+    
+    // Slow pulsing size
+    final scaleVal = 1.0 + math.sin(game.currentTime() * 2) * 0.1;
+    scale = Vector2.all(scaleVal);
   }
 
   @override
@@ -37,7 +43,7 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
       removeFromParent();
       EffectManager.spawnHitEffect(game, position);
       Future.microtask(() {
-        game.notifier.updateIdentity(-15.0);
+        game.notifier.updateIdentity(-30.0); // Heavy hitter
         AudioManager.playHit();
       });
     }
@@ -45,13 +51,11 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
 
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, sizeVal, sizeVal),
-      Paint()..color = GameConfig.crimson,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(sizeVal * 0.25, sizeVal * 0.25, sizeVal * 0.5, sizeVal * 0.5),
-      Paint()..color = GameConfig.background,
-    );
+    final paint = Paint()..color = GameConfig.crimson.withValues(alpha: 0.6);
+    canvas.drawCircle(Offset(sizeVal / 2, sizeVal / 2), sizeVal / 2, paint);
+    
+    // Inner core
+    final corePaint = Paint()..color = Colors.black;
+    canvas.drawCircle(Offset(sizeVal / 2, sizeVal / 2), sizeVal / 4, corePaint);
   }
 }

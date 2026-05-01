@@ -4,6 +4,7 @@ import 'package:flame/collisions.dart';
 import '../../core/game_config.dart';
 import '../game/void_of_echoes_game.dart';
 import '../game/audio_manager.dart';
+import '../game/effect_manager.dart';
 import 'player.dart';
 
 class Fragment extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
@@ -25,6 +26,7 @@ class Fragment extends PositionComponent with HasGameReference<VoidOfEchoesGame>
     super.onCollisionStart(intersectionPoints, other);
     if (other is Player) {
       removeFromParent();
+      EffectManager.spawnCollectionEffect(game, position);
       Future.microtask(() {
         game.notifier.addScore(10);
         game.notifier.updateIdentity(8.0);

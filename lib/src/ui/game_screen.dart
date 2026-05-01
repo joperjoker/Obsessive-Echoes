@@ -5,6 +5,7 @@ import '../game/void_of_echoes_game.dart';
 import '../game/game_state.dart';
 import 'hud.dart';
 import 'overlays.dart';
+import 'dialogue_overlay.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   const GameScreen({super.key});
@@ -32,6 +33,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
         children: [
           GameWidget(game: _game),
           const Hud(),
+          const DialogueOverlay(),
           if (gameState.isGameOver) GameOverOverlay(onRestart: _game.resetGame),
           if (gameState.isVictory) VictoryOverlay(onRestart: _game.resetGame),
         ],

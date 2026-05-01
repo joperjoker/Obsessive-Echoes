@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
@@ -7,11 +8,11 @@ import '../game/audio_manager.dart';
 import '../game/effect_manager.dart';
 import 'player.dart';
 
-class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
-  final double speed = 150.0;
-  static const double sizeVal = 50.0;
+class Stalker extends PositionComponent with HasGameReference<VoidOfEchoesGame>, CollisionCallbacks {
+  final double speed = 260.0;
+  static const double sizeVal = 35.0;
   
-  Enemy({required Vector2 position}) : super(
+  Stalker({required Vector2 position}) : super(
     position: position,
     size: Vector2.all(sizeVal),
     anchor: Anchor.center,
@@ -28,6 +29,9 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
     
     final dir = (game.player.position - position).normalized();
     position += dir * speed * dt;
+    
+    // Slight oscillation to feel "twitchy"
+    angle = math.sin(game.currentTime() * 10) * 0.1;
   }
 
   @override
@@ -37,7 +41,7 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
       removeFromParent();
       EffectManager.spawnHitEffect(game, position);
       Future.microtask(() {
-        game.notifier.updateIdentity(-15.0);
+        game.notifier.updateIdentity(-8.0);
         AudioManager.playHit();
       });
     }
@@ -45,13 +49,14 @@ class Enemy extends PositionComponent with HasGameReference<VoidOfEchoesGame>, C
 
   @override
   void render(Canvas canvas) {
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, sizeVal, sizeVal),
-      Paint()..color = GameConfig.crimson,
-    );
-    canvas.drawRect(
-      Rect.fromLTWH(sizeVal * 0.25, sizeVal * 0.25, sizeVal * 0.5, sizeVal * 0.5),
-      Paint()..color = GameConfig.background,
-    );
+    final paint = Paint()..color = GameConfig.crimson.withValues(alpha: 0.9);
+    // Draw a diamond shape
+    final path = Path()
+      ..moveTo(sizeVal / 2, 0)
+      ..lineTo(sizeVal, sizeVal / 2)
+      ..lineTo(sizeVal / 2, sizeVal)
+      ..lineTo(0, sizeVal / 2)
+      ..close();
+    canvas.drawPath(path, paint);
   }
 }

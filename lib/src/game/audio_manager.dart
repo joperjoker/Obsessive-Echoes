@@ -12,6 +12,7 @@ class AudioManager {
         'sfx_hit.mp3',
         'sfx_collect.mp3',
         'sfx_boss.mp3',
+        'sfx_heartbeat.mp3',
         'bgm_main.mp3',
       ]);
       _ready = true;
@@ -62,4 +63,18 @@ class AudioManager {
   }
 
   static void uiTap() => HapticFeedback.lightImpact();
+
+  static AudioPlayer? _heartbeatPlayer;
+
+  static void startHeartbeat() async {
+    if (!_ready || _heartbeatPlayer != null) return;
+    try {
+      _heartbeatPlayer = await FlameAudio.loop('sfx_heartbeat.mp3', volume: 0.6);
+    } catch (_) {}
+  }
+
+  static void stopHeartbeat() {
+    _heartbeatPlayer?.stop();
+    _heartbeatPlayer = null;
+  }
 }

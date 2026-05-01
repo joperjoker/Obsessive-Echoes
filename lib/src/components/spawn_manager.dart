@@ -3,6 +3,8 @@ import 'package:flame/components.dart';
 import '../game/void_of_echoes_game.dart';
 import '../../core/game_config.dart';
 import 'enemy.dart';
+import 'stalker.dart';
+import 'void_enemy.dart';
 import 'fragment.dart';
 
 class SpawnManager extends Component with HasGameReference<VoidOfEchoesGame> {
@@ -12,10 +14,9 @@ class SpawnManager extends Component with HasGameReference<VoidOfEchoesGame> {
   double _fragmentSpawnTimer = 0;
   double _elapsedTime = 0;
   
-  // Difficulty scaling
   final double _baseEnemySpawnInterval = 2.0;
-  final double _minEnemySpawnInterval = 0.5;
-  final double _difficultyScale = 0.05; // Decrease interval by this much every 10 seconds
+  final double _minEnemySpawnInterval = 0.4;
+  final double _difficultyScale = 0.05;
 
   @override
   void update(double dt) {
@@ -25,12 +26,11 @@ class SpawnManager extends Component with HasGameReference<VoidOfEchoesGame> {
     _fragmentSpawnTimer += dt;
     _elapsedTime += dt;
 
-    // Scale difficulty
     final currentEnemyInterval = (_baseEnemySpawnInterval - (_elapsedTime / 10.0) * _difficultyScale).clamp(_minEnemySpawnInterval, _baseEnemySpawnInterval);
 
     if (_enemySpawnTimer > currentEnemyInterval) {
       _enemySpawnTimer = 0;
-      _spawnEnemy();
+      _spawnRandomEnemy();
     }
 
     if (_fragmentSpawnTimer > 1.5) {
@@ -39,16 +39,30 @@ class SpawnManager extends Component with HasGameReference<VoidOfEchoesGame> {
     }
   }
 
-  void _spawnEnemy() {
-    final side = _random.nextInt(4);
-    Vector2 pos;
-    switch (side) {
-      case 0: pos = Vector2(_random.nextDouble() * GameConfig.arenaWidth, -50); break;
-      case 1: pos = Vector2(GameConfig.arenaWidth + 50, _random.nextDouble() * GameConfig.arenaHeight); break;
-      case 2: pos = Vector2(_random.nextDouble() * GameConfig.arenaWidth, GameConfig.arenaHeight + 50); break;
-      default: pos = Vector2(-50, _random.nextDouble() * GameConfig.arenaHeight); break;
+  void _spawnRandomEnemy() {
+    final roll = _random.nextDouble();
+    PositionComponent enemy;
+    
+    // Weighted spawn based on time
+    if (_elapsedTime > 60 && roll < 0.15) {
+      enemy = VoidEnemy(position: _getRandomEdgePosition());
+    } else if (_elapsedTime > 30 && roll < 0.4) {
+      enemy = Stalker(position: _getRandomEdgePosition());
+    } else {
+      enemy = Enemy(position: _getRandomEdgePosition());
     }
-    game.world.add(Enemy(position: pos));
+    
+    game.world.add(enemy);
+  }
+
+  Vector2 _getRandomEdgePosition() {
+    final side = _random.nextInt(4);
+    switch (side) {
+      case 0: return Vector2(_random.nextDouble() * GameConfig.arenaWidth, -100);
+      case 1: return Vector2(GameConfig.arenaWidth + 100, _random.nextDouble() * GameConfig.arenaHeight);
+      case 2: return Vector2(_random.nextDouble() * GameConfig.arenaWidth, GameConfig.arenaHeight + 100);
+      default: return Vector2(-100, _random.nextDouble() * GameConfig.arenaHeight);
+    }
   }
 
   void _spawnFragment() {
